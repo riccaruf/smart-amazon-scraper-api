@@ -39,7 +39,8 @@ class AmazonProductScraper:
         opt.add_argument('--headless')
         opt.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-        url = "https://www.amazon.it/"
+        #url = "https://www.amazon.it/"
+        url = sys.argv[2]
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=opt)
         # Website URL
         self.driver.get(url)

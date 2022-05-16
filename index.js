@@ -9,13 +9,15 @@ app.use(express.json());
 
 app.get('/',(req,res) => {
 
-    res.send("Welcome to the Amazon info API !");
+    res.send("Welcome to AMAZON Scraper API !");
 });
 
-app.get('/products/:productId', async (req,res) => {
-    const { productId } = req.params;
+app.get('/products/:productId/:webURL', async (req,res) => {
+    const { productId } = req.params.productId;
+    const { webURL} = req.params.webURL;
+
     console.log('- product id:',productId);
-    const python = spawn('python', ['./scraper_module.py',productId]);
+    const python = spawn('python', ['./scraper_module.py',productId, webURL]);
     let json_file_name = ""
     try{
         python.stdout.on('data', function (data) {
