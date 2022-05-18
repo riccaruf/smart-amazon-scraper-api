@@ -4,6 +4,7 @@ const {spawn} = require('child_process');
 const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 5000;
+const scraper = require("./scraper_module")
 
 app.use(express.json());
 
@@ -12,12 +13,11 @@ app.get('/',(req,res) => {
     res.send("Welcome to AMAZON Scraper API !");
 });
 
-app.get('/products/:productId/:webURL', async (req,res) => {
-    const { productId } = req.params.productId;
-    const { webURL} = req.params.webURL;
-
-    console.log('- product id:',productId);
-    const python = spawn('python', ['./scraper_module.py',productId, webURL]);
+app.get('/products/:productId', async (req,res) => {
+    const productId = req.params.productId;
+    console.log('- product id :',productId);
+    /*
+    const python = spawn('python', ['./scraper_module.py',productId]);
     let json_file_name = ""
     try{
         python.stdout.on('data', function (data) {
@@ -25,10 +25,19 @@ app.get('/products/:productId/:webURL', async (req,res) => {
             rawdata = fs.readFileSync(json_file_name);
             let punishments= JSON.parse(rawdata);
             res.send(punishments);
+            fs.unlinkSync(json_file_name);
         });
     } catch (error) {
         console.log('- Error !',error);
     }
+    */
+   try{
+        json = await scraper.scrapeMe(productId);
+        console.log("- send back json");
+        await res.send(json);
+   } catch (error) {
+        console.log('- Error !',error);
+   }
 
 });
 

@@ -4,12 +4,14 @@ import sys
 from datetime import date
 import csv
 from bs4 import BeautifulSoup
+from numpy import record
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
-import json
 import pandas as pd
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
 
 """
     Step1: Open the browser
@@ -21,7 +23,7 @@ import pandas as pd
     Step7: Close the browser
     Step8: Write all the product's information in the product record list in the spreadsheet
 """
-
+WEB_URL = "https://www.amazon.it/"
 
 class AmazonProductScraper:
     def __init__(self):
@@ -37,29 +39,29 @@ class AmazonProductScraper:
         opt.add_argument("--disable-extensions")
         opt.add_argument('--log-level=OFF')
         opt.add_argument('--headless')
-        opt.add_experimental_option('excludeSwitches', ['enable-logging'])
+        opt.add_argument('--log-level=1')
+        #opt.add_experimental_option('excludeSwitches', ['enable-logging'])
 
-        #url = "https://www.amazon.it/"
-        url = sys.argv[2]
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=opt)
+        #self.driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=opt)
+        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()),options=opt)
         # Website URL
-        self.driver.get(url)
+        self.driver.get(WEB_URL)
 
         # Wait till the page has been loaded
-        time.sleep(3)
+        time.sleep(1)
 
     def get_category_url(self):
 
         self.category_name = sys.argv[1]
-
+        #print("- self.category_name:",self.category_name)
         self.formatted_category_name = self.category_name.replace(" ", "+")
 
         # This is the product url format for all products
-        category_url = "https://www.amazon.it/s?k={}&ref=nb_sb_noss"
+        category_url = WEB_URL+"s?k={}&ref=nb_sb_noss"
 
         category_url = category_url.format(self.formatted_category_name)
 
-        #print('{ "CategoryURL":"'+category_url+'",')
+        print('{ "CategoryURL":"'+category_url+'",')
 
         # Go to the product webpage
         self.driver.get(category_url)
@@ -87,7 +89,7 @@ class AmazonProductScraper:
             description = a_tag_item.text.strip()
 
             # Get the url of the item
-            category_url = "https://www.amazon.it/" + a_tag_item.get('href')
+            category_url = WEB_URL + a_tag_item.get('href')
 
             # Get the price of the product
             try:
@@ -125,14 +127,20 @@ class AmazonProductScraper:
         try:
 
             max_number_of_pages = "//span[@class='s-pagination-item s-pagination-disabled']"
+            number_of_pages = self.driver.find_element(by=By.XPATH, value=max_number_of_pages)
 
-            number_of_pages = self.driver.find_element_by_xpath(max_number_of_pages)
-            #print('"Maximum_Pages": "'+number_of_pages.text+'",')
         except NoSuchElementException:
             max_number_of_pages = "//li[@class='a-normal'][last()]"
-            number_of_pages = self.driver.find_element_by_xpath(max_number_of_pages)
+            number_of_pages = self.driver.find_element(by=By.XPATH, value=max_number_of_pages)
 
-        for i in range(2, int(number_of_pages.text) + 1):
+        nop = int(number_of_pages.text)
+
+
+        if (nop > 2):
+            #print ("- nop is too big :",nop)
+            nop = 2
+
+        for i in range(2, nop + 1):
             # Goes to next page
             next_page_url = category_url + "&page=" + str(i)
             self.driver.get(next_page_url)
@@ -165,28 +173,17 @@ class AmazonProductScraper:
             writer.writerows(records)
             f.close()
 
-        message = f"Information about the product is stored in {file_name}"
-
-        #print('"message" : "'+message+'",')
-        message = f"Information about the json_file_name in {json_file_name}"
-        #print('"jsonis" : "'+message+'"}')
         #os.startfile(file_name)
-
-        df = pd.read_csv (file_name,sep = ",", header = 0, index_col = False)
-        df.to_json (json_file_name,orient = "records", date_format = "epoch", double_precision = 10, force_ascii = True, date_unit = "ms", default_handler = None)
-
-        print(json_file_name)
-
+        if (os.path.exists(file_name)):
+            df = pd.read_csv (file_name,sep = ",", header = 0, index_col = False)
+            df.to_json (json_file_name,orient = "records", date_format = "epoch", double_precision = 10, force_ascii = True, date_unit = "ms", default_handler = None)
+            print(json_file_name)
+            os.remove(file_name)
 
 if __name__ == "__main__":
     my_amazon_bot = AmazonProductScraper()
-
     my_amazon_bot.open_browser()
-
     category_details = my_amazon_bot.get_category_url()
-
     my_amazon_bot.extract_product_information(my_amazon_bot.extract_webpage_information())
-
     navigation = my_amazon_bot.navigate_to_other_pages(category_details)
-
     my_amazon_bot.product_information_spreadsheet(navigation)
