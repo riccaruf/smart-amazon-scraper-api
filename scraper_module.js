@@ -53,6 +53,8 @@ async function extractWebpageInformation(driver){
     var source = await driver.getPageSource();
     //console.log("- source:",source);
     var soup = new JSSoup(source);
+    var tag = soup.find('head');
+    console.log("- headers :",tag.prettify())
     pageResults = soup.findAll('div', {'data-component-type': 's-search-result'});
     //console.log("- pageResults here:",pageResults);
     return pageResults;
