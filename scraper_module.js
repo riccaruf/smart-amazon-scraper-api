@@ -16,7 +16,6 @@ async function getCategoryUrl(value){
 }
 
 async function navigateToOtherPages(driver,categoryUrl,jsonResult){
-    var source = await driver.getPageSource();
 
     try{
         maxNumberOfPages = "//span[@class='s-pagination-item s-pagination-disabled']";
@@ -52,6 +51,7 @@ async function navigateToOtherPages(driver,categoryUrl,jsonResult){
 
 async function extractWebpageInformation(driver){
     var source = await driver.getPageSource();
+    console.log("- source:",source);
     var soup = new JSSoup(source);
     pageResults = soup.findAll('div', {'data-component-type': 's-search-result'});
     //console.log("- pageResults here:",pageResults);
@@ -134,10 +134,10 @@ async function amazonScraper(value){
     options.addArguments(["--log-level=1"]);
     options.addArguments(["--no-sandbox"]);
     options.addArguments(["--disable-dev-shm-usage"]);
-    options.addArguments(["--disable-features=NetworkService"]);
-    options.addArguments(["--disable-features=VizDisplayCompositor"]);
-    options.addArguments(["--window-size=1920x1080"]);
-    options.addArguments(["ignore-certificate-errors"]);
+    //options.addArguments(["--disable-features=NetworkService"]);
+    //options.addArguments(["--disable-features=VizDisplayCompositor"]);
+    //options.addArguments(["--window-size=1920x1080"]);
+    //options.addArguments(["ignore-certificate-errors"]);
     //options.addArguments(["--proxy-server=socks4://"+proxy]);
 
     driver = new webdriver.Builder()
@@ -146,11 +146,15 @@ async function amazonScraper(value){
              .setChromeService(serviceBuilder) // needed for heroku
              .build();
 
-    await driver.get("https://www.amazon.it");
+    await driver.get("https://www.amazon.it/");
 
     title = await driver.getTitle();
+    console.log("- title:",title);
+    categoryUrl = await getCategoryUrl(value);
+    console.log("- category URL:",categoryUrl);
 
-    await driver.get(getCategoryUrl(value));
+    await driver.get(categoryUrl);
+
     var jsonResult = {};
     jsonResult["Results"]=[];
 
@@ -159,7 +163,7 @@ async function amazonScraper(value){
     jsonResult["Results"] = await extractProductInformation(pageResults,jsonResult["Results"]);
 
     // next pages
-    await navigateToOtherPages(driver,await getCategoryUrl(value),jsonResult["Results"]);
+    //await navigateToOtherPages(driver,await getCategoryUrl(value),jsonResult["Results"]);
     await driver.close();
     await driver.quit();
     return jsonResult;
