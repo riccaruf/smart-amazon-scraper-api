@@ -148,7 +148,7 @@ async function amazonScraper(value){
              .setChromeService(serviceBuilder) // needed for heroku
              .build();
 
-    await driver.get("https://www.amazon.it/");
+    await driver.get("https://www.amazon.com/");
 
     title = await driver.getTitle();
     console.log("- title:",title);
