@@ -9,9 +9,9 @@ const WEB_URL = "https://www.amazon.it/";
 const By = require('selenium-webdriver').By;
 
 async function getCategoryUrl(value){
-    console.log("- getCategoryUrl value:",value);
     var formattedCategoryName = value.replace (" ","+");
     var categoryUrl = WEB_URL+"s?k="+formattedCategoryName+"&ref=nb_sb_noss";
+    console.log("- getCategoryUrl:",categoryUrl);
     return categoryUrl;
 }
 
@@ -51,7 +51,7 @@ async function navigateToOtherPages(driver,categoryUrl,jsonResult){
 
 async function extractWebpageInformation(driver){
     var source = await driver.getPageSource();
-    console.log("- source:",source);
+    //console.log("- source:",source);
     var soup = new JSSoup(source);
     pageResults = soup.findAll('div', {'data-component-type': 's-search-result'});
     //console.log("- pageResults here:",pageResults);
@@ -151,8 +151,6 @@ async function amazonScraper(value){
     title = await driver.getTitle();
     console.log("- title:",title);
     categoryUrl = await getCategoryUrl(value);
-    console.log("- category URL:",categoryUrl);
-
     await driver.get(categoryUrl);
 
     var jsonResult = {};
