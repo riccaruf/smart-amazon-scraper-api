@@ -5,7 +5,7 @@ module.exports = {
     scrapeMe : amazonScraper
 }
 
-const WEB_URL = "https://www.amazon.it/";
+const WEB_URL = "https://www.amazon.com/";
 const By = require('selenium-webdriver').By;
 
 async function getCategoryUrl(value){
@@ -148,7 +148,7 @@ async function amazonScraper(value){
              .setChromeService(serviceBuilder) // needed for heroku
              .build();
 
-    await driver.get("https://www.amazon.com/");
+    await driver.get(WEB_URL);
 
     title = await driver.getTitle();
     console.log("- title:",title);
